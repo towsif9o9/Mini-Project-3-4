@@ -1,0 +1,16 @@
+/* Tailwind does most of the styling. This file only has the small extras. */
+
+body {
+  font-family: "Schibsted Grotesk", system-ui, sans-serif;
+}
+
+/* keyboard users can always see where they are */
+:focus-visible {
+  outline: 3px solid #73bf9c;
+  outline-offset: 2px;
+}
+
+/* people who prefer less motion get no spinner animation */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin { animation: none; }
+}
