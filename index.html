@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Profile Finder</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS (CDN version, no install needed) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Palette scales plus semantic aliases used throughout the page.
+    tailwind.config = {
+      theme: { extend: { colors: {
+        "carbon-black": {
+          50: "#f1f3f2", 100: "#e4e7e5", 200: "#c8d0cb", 300: "#adb8b1", 400: "#92a098",
+          500: "#77887e", 600: "#5f6d65", 700: "#47524b", 800: "#2f3732", 900: "#181b19", 950: "#111312"
+        },
+        "stormy-teal": {
+          50: "#ecf9f9", 100: "#d8f2f3", 200: "#b1e6e7", 300: "#8bd9da", 400: "#64ccce",
+          500: "#3dc0c2", 600: "#31999b", 700: "#257374", 800: "#184d4e", 900: "#0c2627", 950: "#091b1b"
+        },
+        seaweed: {
+          50: "#eef7f3", 100: "#dcefe6", 200: "#b9dfcd", 300: "#96cfb4", 400: "#73bf9c",
+          500: "#50af83", 600: "#408c69", 700: "#30694e", 800: "#204634", 900: "#10231a", 950: "#0b1812"
+        },
+        "muted-teal": {
+          50: "#eff6f0", 100: "#dfece0", 200: "#bfd9c2", 300: "#9fc6a3", 400: "#7eb485",
+          500: "#5ea166", 600: "#4b8152", 700: "#39603d", 800: "#264029", 900: "#132014", 950: "#0d160e"
+        },
+        "alabaster-grey": {
+          50: "#f1f3f2", 100: "#e3e8e5", 200: "#c8d0cb", 300: "#acb9b1", 400: "#91a197",
+          500: "#758a7d", 600: "#5e6e64", 700: "#46534b", 800: "#2f3732", 900: "#171c19", 950: "#101312"
+        },
+        forest: "#091b1b",
+        leaf: "#30694e",
+        paper: "#111312",
+        ink: "#f1f3f2",
+        mint: "#204634"
+      } } }
+    };
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="min-h-screen bg-paper text-ink">
+
+  <!-- ===== Header: title + search ===== -->
+  <header class="bg-forest text-white">
+    <div class="mx-auto max-w-6xl px-4 pb-8 pt-10">
+      <!-- little decorative squares, like GitHub's contribution graph -->
+      <div class="mb-4 flex gap-1" aria-hidden="true">
+        <span class="h-3 w-3 rounded-sm bg-leaf/30"></span><span class="h-3 w-3 rounded-sm bg-leaf/60"></span><span class="h-3 w-3 rounded-sm bg-leaf/30"></span><span class="h-3 w-3 rounded-sm bg-leaf"></span><span class="h-3 w-3 rounded-sm bg-mint/80"></span><span class="h-3 w-3 rounded-sm bg-leaf/60"></span><span class="h-3 w-3 rounded-sm bg-leaf/30"></span><span class="h-3 w-3 rounded-sm bg-leaf"></span><span class="h-3 w-3 rounded-sm bg-leaf/60"></span><span class="h-3 w-3 rounded-sm bg-mint/80"></span><span class="h-3 w-3 rounded-sm bg-leaf/30"></span><span class="h-3 w-3 rounded-sm bg-leaf/60"></span>
+      </div>
+      <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">GitHub Profile Finder</h1>
+      <p class="mt-2 max-w-xl text-white/80">Type a GitHub username to see the profile and every public repository.</p>
+
+      <form id="search-form" role="search" aria-label="Search GitHub profiles" class="mt-6 flex max-w-xl gap-3">
+        <label for="username" class="sr-only">GitHub username</label>
+        <input id="username" type="search" placeholder="Try torvalds or gaearon" autocomplete="off"
+               class="w-full rounded-lg bg-carbon-black-800 px-3 py-2 text-ink placeholder:text-carbon-black-400">
+        <button class="rounded-lg bg-leaf px-5 py-2 font-semibold text-white hover:bg-leaf/90">Search</button>
+      </form>
+
+      <!-- recent searches (from localStorage) -->
+      <nav id="recent" aria-label="Recent searches" class="mt-4 flex flex-wrap items-center gap-2 text-sm"></nav>
+    </div>
+  </header>
+
+  <main class="mx-auto grid max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[320px_1fr]">
+
+    <!-- ===== Left: profile + saved profiles ===== -->
+    <aside aria-label="GitHub profile and saved profiles" class="space-y-6">
+      <section id="profile" aria-label="GitHub profile"></section>
+      <section aria-labelledby="saved-heading" class="rounded-xl bg-carbon-black-900 p-5 shadow-sm ring-1 ring-white/10">
+        <h2 id="saved-heading" class="text-lg font-bold">
+          Saved profiles <span id="saved-count" class="ml-1 rounded-full bg-mint px-2 py-0.5 text-sm">0</span>
+        </h2>
+        <ul id="saved-list" class="mt-4 space-y-3"></ul>
+      </section>
+    </aside>
+
+    <!-- ===== Right: repositories ===== -->
+    <div>
+      <div id="status" role="status"></div>   <!-- welcome / loading / error / not found -->
+
+      <section id="repo-area" aria-labelledby="repo-heading" class="hidden">
+        <h2 id="repo-heading" class="sr-only">Repositories</h2>
+        <div class="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
+          <div>
+            <label for="repo-search" class="mb-1 block text-sm">Repository name</label>
+            <input id="repo-search" type="search" placeholder="Search repositories"
+                   class="w-full rounded-lg bg-carbon-black-900 px-3 py-2 text-ink ring-1 ring-ink/20 placeholder:text-carbon-black-400">
+          </div>
+          <div>
+            <label for="language" class="mb-1 block text-sm">Language</label>
+            <select id="language" class="w-full rounded-lg bg-carbon-black-900 px-3 py-2 text-ink ring-1 ring-ink/20">
+              <option value="all">All languages</option>
+            </select>
+          </div>
+          <div>
+            <label for="repo-sort" class="mb-1 block text-sm">Sort by</label>
+            <select id="repo-sort" class="w-full rounded-lg bg-carbon-black-900 px-3 py-2 text-ink ring-1 ring-ink/20">
+              <option value="updated">Recently updated</option>
+              <option value="stars">Most stars</option>
+              <option value="name">Name (A to Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <p id="repo-count" class="mb-4 mt-5 text-sm text-ink/70" aria-live="polite"></p>
+        <div id="repos" class="grid gap-4 sm:grid-cols-2"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mx-auto max-w-6xl px-4 pb-8 text-sm text-ink/60">
+    Data from the GitHub REST API.
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
